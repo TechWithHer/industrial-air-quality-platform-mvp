@@ -1,15 +1,14 @@
-
-variable "aws_region" {
+variable "raw_bucket_name" {
   type    = string
-  default = "ap-southeast-1"
+  default = "iaqap-dev-raw"
 }
 
-variable "project_name" {
+variable "processed_bucket_name" {
   type    = string
-  default = "iaqap"
+  default = "iaqap-dev-processed"
 }
 
-variable "environment" {
+variable "athena_results_bucket_name" {
   type    = string
-  default = "dev"
+  default = "iaqap-dev-athena-results"
 }
