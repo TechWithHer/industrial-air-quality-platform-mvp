@@ -15,7 +15,6 @@ The infrastructure is provisioned entirely using Terraform and can be deployed w
 
 ## The Flow
 
-""
 GitHub
     │
 GitHub Actions
@@ -36,5 +35,3 @@ Terraform
 │      │
 │      ▼
 │ CloudWatch Logs
-
-"" 
