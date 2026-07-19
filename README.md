@@ -13,25 +13,84 @@ The platform periodically collects PSI readings from Singapore's NEA Open Data A
 
 The infrastructure is provisioned entirely using Terraform and can be deployed within minutes.
 
-## The Flow
+## Solution Architechture
 
-GitHub
-    │
-GitHub Actions
-    │
-Terraform
-    │
-──────────────────────── AWS ────────────────────────
-│
-├── IAM Role
-├── EventBridge
-├── Lambda
-│      │
-│      ▼
-│   NEA API
-│      │
-│      ▼
-│   S3 Raw Bucket
-│      │
-│      ▼
-│ CloudWatch Logs
+                              ┌──────────────────────────────┐
+                              │         GitHub Repo          │
+                              │ Terraform + Python + CI/CD   │
+                              └──────────────┬───────────────┘
+                                             │
+                              Push / Pull Request / Merge
+                                             │
+                                             ▼
+                     ┌────────────────────────────────────────┐
+                     │        GitHub Actions Pipeline         │
+                     │----------------------------------------│
+                     │ • Checkout Repository                  │
+                     │ • Terraform Init                       │
+                     │ • Terraform Validate                   │
+                     │ • Terraform Plan                       │
+                     │ • (Terraform Apply)                    │
+                     └─────────────────┬──────────────────────┘
+                                       │
+                                       ▼
+                    ┌──────────────────────────────────────────┐
+                    │          Terraform (IaC)                 │
+                    │------------------------------------------│
+                    │ Provisions & Manages AWS Resources       │
+                    │                                          │
+                    │ • IAM Roles & Policies                   │
+                    │ • Lambda Function                        │
+                    │ • EventBridge Rule                       │
+                    │ • S3 Buckets                             │
+                    │ • CloudWatch Log Group                   │
+                    └─────────────────┬────────────────────────┘
+                                      │
+──────────────────────────────────────┼──────────────────────────────────────
+                                      │
+                                      ▼
+                         AWS Runtime (Production)
+                                      │
+                                      │
+                       Every 15 Minutes (Schedule)
+                                      │
+                                      ▼
+                       ┌────────────────────────┐
+                       │      EventBridge       │
+                       │ Scheduled Rule         │
+                       └───────────┬────────────┘
+                                   │
+                                   ▼
+                      Invokes Lambda Automatically
+                                   │
+                                   ▼
+                     ┌─────────────────────────┐
+                     │   Collector Lambda      │
+                     │-------------------------│
+                     │ • Calls NEA API         │
+                     │ • Parses JSON           │
+                     │ • Creates S3 Key        │
+                     │ • Uploads Object        │
+                     └───────────┬─────────────┘
+                                 │
+              ┌──────────────────┴───────────────────┐
+              │                                      │
+              ▼                                      ▼
+   Singapore NEA API                     CloudWatch Logs
+ (Real-time PSI Endpoint)            (Execution & Errors)
+              │
+              │ JSON Response
+              ▼
+      ┌───────────────────────────┐
+      │     S3 Raw Bucket          │
+      │----------------------------│
+      │ year=2026/                 │
+      │   month=07/                │
+      │      day=19/               │
+      │         09:00.json         │
+      │         09:15.json         │
+      │         09:30.json         │
+      └────────────────────────────┘
+
+
+      
