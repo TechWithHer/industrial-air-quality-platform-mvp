@@ -6,21 +6,22 @@ resource "aws_s3_bucket" "raw" {
   bucket = var.raw_bucket_name
 }
 
-#########################################
-# S3 Processed Bucket
-#########################################
+# Access Block ############################
+resource "aws_s3_bucket_public_access_block" "raw" {
 
-resource "aws_s3_bucket" "processed" {
-  bucket = var.processed_bucket_name
+  bucket = aws_s3_bucket.raw.id
+
+  block_public_acls       = true
+
+  ignore_public_acls      = true
+
+  block_public_policy     = true
+
+  restrict_public_buckets = true
+
 }
 
-#########################################
-# S3 Athena Results Bucket
-#########################################
-
-resource "aws_s3_bucket" "athena_results" {
-  bucket = var.athena_results_bucket_name
-}
+# Versioning ###############################
 
 resource "aws_s3_bucket_versioning" "raw" {
 
@@ -34,29 +35,7 @@ resource "aws_s3_bucket_versioning" "raw" {
 
 }
 
-resource "aws_s3_bucket_versioning" "processed" {
-
-  bucket = aws_s3_bucket.processed.id
-
-  versioning_configuration {
-
-    status = "Enabled"
-
-  }
-
-}
-
-resource "aws_s3_bucket_versioning" "athena" {
-
-  bucket = aws_s3_bucket.athena_results.id
-
-  versioning_configuration {
-
-    status = "Enabled"
-
-  }
-
-}
+# ENCRYPTION #################################
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "raw" {
 
@@ -73,55 +52,20 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "raw" {
   }
 
 }
-resource "aws_s3_bucket_server_side_encryption_configuration" "processed" {
 
-  bucket = aws_s3_bucket.raw.id
+#########################################
+# S3 Processed Bucket
+#########################################
 
-  rule {
-
-    apply_server_side_encryption_by_default {
-
-      sse_algorithm = "AES256"
-
-    }
-
-  }
-
+resource "aws_s3_bucket" "processed" {
+  bucket = var.processed_bucket_name
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "athena" {
-
-  bucket = aws_s3_bucket.raw.id
-
-  rule {
-
-    apply_server_side_encryption_by_default {
-
-      sse_algorithm = "AES256"
-
-    }
-
-  }
-
-}
-
-resource "aws_s3_bucket_public_access_block" "raw" {
-
-  bucket = aws_s3_bucket.raw.id
-
-  block_public_acls       = true
-
-  ignore_public_acls      = true
-
-  block_public_policy     = true
-
-  restrict_public_buckets = true
-
-}
+# Access Block ############################
 
 resource "aws_s3_bucket_public_access_block" "processed" {
 
-  bucket = aws_s3_bucket.raw.id
+  bucket = aws_s3_bucket.processed.id
 
   block_public_acls       = true
 
@@ -133,9 +77,51 @@ resource "aws_s3_bucket_public_access_block" "processed" {
 
 }
 
-resource "aws_s3_bucket_public_access_block" "athena" {
+# Versioning ###############################
 
-  bucket = aws_s3_bucket.raw.id
+resource "aws_s3_bucket_versioning" "processed" {
+
+  bucket = aws_s3_bucket.processed.id
+
+  versioning_configuration {
+
+    status = "Enabled"
+
+  }
+
+}
+# ENCRYPTION #################################
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "processed" {
+
+  bucket = aws_s3_bucket.processed.id
+
+  rule {
+
+    apply_server_side_encryption_by_default {
+
+      sse_algorithm = "AES256"
+
+    }
+
+  }
+
+}
+
+
+#########################################
+# S3 Athena Results Bucket
+#########################################
+
+resource "aws_s3_bucket" "athena_results" {
+  bucket = var.athena_results_bucket_name
+}
+
+# Access Block ############################
+
+resource "aws_s3_bucket_public_access_block" "athena_results" {
+
+  bucket = aws_s3_bucket.athena_results.id
 
   block_public_acls       = true
 
@@ -146,3 +132,40 @@ resource "aws_s3_bucket_public_access_block" "athena" {
   restrict_public_buckets = true
 
 }
+
+
+# Versioning ###############################
+
+resource "aws_s3_bucket_versioning" "athena_results" {
+
+  bucket = aws_s3_bucket.athena_results.id
+
+  versioning_configuration {
+
+    status = "Enabled"
+
+  }
+
+}
+
+# ENCRYPTION #################################
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "athena_results" {
+
+  bucket = aws_s3_bucket.athena_results.id
+
+  rule {
+
+    apply_server_side_encryption_by_default {
+
+      sse_algorithm = "AES256"
+
+    }
+
+  }
+
+}
+
+
+
+
