@@ -46,7 +46,6 @@ The infrastructure is provisioned entirely using Terraform and can be deployed w
                     │ • CloudWatch Log Group                   │
                     └─────────────────┬────────────────────────┘
                                       │
-──────────────────────────────────────┼──────────────────────────────────────
                                       │
                                       ▼
                          AWS Runtime (Production)
@@ -91,6 +90,3 @@ The infrastructure is provisioned entirely using Terraform and can be deployed w
       │         09:15.json         │
       │         09:30.json         │
       └────────────────────────────┘
-
-
-      
