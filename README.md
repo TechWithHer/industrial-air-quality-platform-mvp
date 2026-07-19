@@ -14,6 +14,8 @@ The platform periodically collects PSI readings from Singapore's NEA Open Data A
 The infrastructure is provisioned entirely using Terraform and can be deployed within minutes.
 
 ## The Flow
+
+""
 GitHub
     │
 GitHub Actions
@@ -34,3 +36,5 @@ Terraform
 │      │
 │      ▼
 │ CloudWatch Logs
+
+"" 
