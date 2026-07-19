@@ -166,6 +166,59 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "athena_results" {
 
 }
 
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    effect = "Allow"
 
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
 
+    actions = ["sts:AssumeRole"]
+  }
+}
 
+resource "aws_iam_role" "collector_lambda_role" {
+  name = "iaqap-dev-collector-lambda-role"
+
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+data "aws_iam_policy_document" "collector_policy" {
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject"
+    ]
+
+    resources = [
+      "${aws_s3_bucket.raw.arn}/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "collector_policy" {
+  name   = "iaqap-dev-collector-policy"
+  policy = data.aws_iam_policy_document.collector_policy.json
+}
+resource "aws_iam_role_policy_attachment" "collector_policy_attachment" {
+
+  role = aws_iam_role.collector_lambda_role.name
+
+  policy_arn = aws_iam_policy.collector_policy.arn
+
+}
