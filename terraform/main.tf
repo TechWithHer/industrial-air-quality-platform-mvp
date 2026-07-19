@@ -11,11 +11,11 @@ resource "aws_s3_bucket_public_access_block" "raw" {
 
   bucket = aws_s3_bucket.raw.id
 
-  block_public_acls       = true
+  block_public_acls = true
 
-  ignore_public_acls      = true
+  ignore_public_acls = true
 
-  block_public_policy     = true
+  block_public_policy = true
 
   restrict_public_buckets = true
 
@@ -67,11 +67,11 @@ resource "aws_s3_bucket_public_access_block" "processed" {
 
   bucket = aws_s3_bucket.processed.id
 
-  block_public_acls       = true
+  block_public_acls = true
 
-  ignore_public_acls      = true
+  ignore_public_acls = true
 
-  block_public_policy     = true
+  block_public_policy = true
 
   restrict_public_buckets = true
 
@@ -123,11 +123,11 @@ resource "aws_s3_bucket_public_access_block" "athena_results" {
 
   bucket = aws_s3_bucket.athena_results.id
 
-  block_public_acls       = true
+  block_public_acls = true
 
-  ignore_public_acls      = true
+  ignore_public_acls = true
 
-  block_public_policy     = true
+  block_public_policy = true
 
   restrict_public_buckets = true
 
