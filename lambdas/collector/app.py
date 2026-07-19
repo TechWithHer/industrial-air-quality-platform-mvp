@@ -16,8 +16,16 @@ NEA_URL = "https://api-open.data.gov.sg/v2/real-time/api/psi"
 def lambda_handler(event, context):
 
     # Fetch data from NEA API
-    with urllib.request.urlopen(NEA_URL) as response:
-        data = json.loads(response.read().decode("utf-8"))
+    request = urllib.request.Request(
+    NEA_URL,
+    headers={
+        "User-Agent": "Mozilla/5.0"
+    }
+)
+
+    with urllib.request.urlopen(request) as response:
+     data = json.loads(response.read().decode("utf-8"))
+
 
     # Create partitioned S3 key
     timestamp = datetime.utcnow()
