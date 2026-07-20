@@ -1,7 +1,9 @@
-import boto3
 import json
+import io
 import os
-from datetime import datetime
+
+import boto3
+import pandas as pd
 
 s3 = boto3.client("s3")
 
@@ -10,29 +12,67 @@ PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
 
 def lambda_handler(event, context):
 
+    # Get uploaded file information from S3 event
     record = event["Records"][0]
 
-    source_bucket = record["s3"]["bucket"]["name"]
+    raw_bucket = record["s3"]["bucket"]["name"]
+    raw_key = record["s3"]["object"]["key"]
 
-    source_key = record["s3"]["object"]["key"]
+    print(f"Processing {raw_bucket}/{raw_key}")
 
+    # Download JSON from Raw bucket
     response = s3.get_object(
-        Bucket=source_bucket,
-        Key=source_key
+        Bucket=raw_bucket,
+        Key=raw_key
     )
 
-    data = json.loads(response["Body"].read())
+    data = json.loads(
+        response["Body"].read().decode("utf-8")
+    )
 
-    data["processed_at"] = datetime.utcnow().isoformat()
+    item = data["data"]["items"][0]
+    timestamp = item["timestamp"]
+    readings = item["readings"]
+
+    rows = []
+
+    for region in ["north", "south", "east", "west", "central"]:
+
+        rows.append({
+            "timestamp": timestamp,
+            "region": region,
+            "psi": readings["psi_twenty_four_hourly"][region],
+            "pm25": readings["pm25_twenty_four_hourly"][region],
+            "pm10": readings["pm10_twenty_four_hourly"][region],
+            "o3": readings["o3_eight_hour_max"][region],
+            "no2": readings["no2_one_hour_max"][region]
+        })
+
+    df = pd.DataFrame(rows)
+
+    # Convert DataFrame to Parquet
+    buffer = io.BytesIO()
+
+    df.to_parquet(
+        buffer,
+        engine="pyarrow",
+        index=False
+    )
+
+    buffer.seek(0)
+
+    parquet_key = raw_key.replace(".json", ".parquet")
 
     s3.put_object(
         Bucket=PROCESSED_BUCKET,
-        Key=source_key,
-        Body=json.dumps(data),
-        ContentType="application/json"
+        Key=parquet_key,
+        Body=buffer.getvalue(),
+        ContentType="application/octet-stream"
     )
+
+    print(f"Uploaded {parquet_key}")
 
     return {
         "statusCode": 200,
-        "message": "Transformation completed"
+        "rows_processed": len(df)
     }

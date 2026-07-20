@@ -1,15 +1,20 @@
-data "archive_file" "transformer_zip" {
+###############################################
+# Package Transformer Lambda
+###############################################
 
+data "archive_file" "transformer_zip" {
   type        = "zip"
   source_dir  = "../lambdas/transformer"
   output_path = "../lambdas/transformer.zip"
-
 }
+
+###############################################
+# IAM Policy
+###############################################
 
 data "aws_iam_policy_document" "transformer_policy" {
 
   statement {
-
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
@@ -19,11 +24,9 @@ data "aws_iam_policy_document" "transformer_policy" {
     resources = [
       "arn:aws:logs:*:*:*"
     ]
-
   }
 
   statement {
-
     actions = [
       "s3:GetObject"
     ]
@@ -31,11 +34,9 @@ data "aws_iam_policy_document" "transformer_policy" {
     resources = [
       "${aws_s3_bucket.raw.arn}/*"
     ]
-
   }
 
   statement {
-
     actions = [
       "s3:PutObject"
     ]
@@ -43,33 +44,38 @@ data "aws_iam_policy_document" "transformer_policy" {
     resources = [
       "${aws_s3_bucket.processed.arn}/*"
     ]
-
   }
-
 }
 
 resource "aws_iam_policy" "transformer_policy" {
 
   name   = "iaqap-dev-transformer-policy"
-  policy = data.aws_iam_policy_document.transformer_policy.json
 
+  policy = data.aws_iam_policy_document.transformer_policy.json
 }
+
+###############################################
+# IAM Role
+###############################################
 
 resource "aws_iam_role" "transformer_lambda_role" {
 
   name = "iaqap-dev-transformer-lambda-role"
 
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-
 }
 
 resource "aws_iam_role_policy_attachment" "transformer_policy_attachment" {
 
-  role = aws_iam_role.transformer_lambda_role.name
+  role       = aws_iam_role.transformer_lambda_role.name
 
   policy_arn = aws_iam_policy.transformer_policy.arn
-
 }
+
+###############################################
+# Lambda Function
+###############################################
+
 resource "aws_lambda_function" "transformer" {
 
   function_name = "iaqap-dev-transformer"
@@ -85,24 +91,30 @@ resource "aws_lambda_function" "transformer" {
   timeout = 30
 
   environment {
-
     variables = {
-
       PROCESSED_BUCKET = aws_s3_bucket.processed.bucket
-
     }
-
   }
 
+  depends_on = [
+    aws_iam_role_policy_attachment.transformer_policy_attachment
+  ]
 }
+
+###############################################
+# CloudWatch Logs
+###############################################
 
 resource "aws_cloudwatch_log_group" "transformer" {
 
-  name = "/aws/lambda/iaqap-dev-transformer"
+  name              = "/aws/lambda/iaqap-dev-transformer"
 
   retention_in_days = 14
-
 }
+
+###############################################
+# Allow S3 to Invoke Lambda
+###############################################
 
 resource "aws_lambda_permission" "allow_s3" {
 
@@ -115,8 +127,11 @@ resource "aws_lambda_permission" "allow_s3" {
   principal = "s3.amazonaws.com"
 
   source_arn = aws_s3_bucket.raw.arn
-
 }
+
+###############################################
+# S3 Event Notification
+###############################################
 
 resource "aws_s3_bucket_notification" "raw_notification" {
 
@@ -130,12 +145,10 @@ resource "aws_s3_bucket_notification" "raw_notification" {
       "s3:ObjectCreated:*"
     ]
 
+    filter_suffix = ".json"
   }
 
   depends_on = [
-
     aws_lambda_permission.allow_s3
-
   ]
-
 }
