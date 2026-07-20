@@ -65,7 +65,7 @@ resource "aws_iam_role" "transformer_lambda_role" {
 
 resource "aws_iam_role_policy_attachment" "transformer_policy_attachment" {
 
-  role       = aws_iam_role.transformer_lambda_role.name
+  role = aws_iam_role.transformer_lambda_role.name
 
   policy_arn = aws_iam_policy.transformer_policy.arn
 
